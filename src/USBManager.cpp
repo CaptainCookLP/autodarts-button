@@ -16,4 +16,4 @@ bool USBManager::sendShortcut(const String& key, uint8_t mods) {
   if (mods & ModAlt) keyboard_.press(KEY_LEFT_ALT); if (mods & ModGui) keyboard_.press(KEY_LEFT_GUI);
   keyboard_.press(code); delay(15); keyboard_.releaseAll(); return true;
 }
-void USBManager::sendEvent(const String& id) { USBSerial.printf("{\"event\":\"button\",\"action\":\"%s\"}\n", id.c_str()); }
+void USBManager::sendEvent(const String& id) { Serial.printf("{\"event\":\"button\",\"action\":\"%s\"}\n", id.c_str()); }

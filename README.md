@@ -63,7 +63,7 @@ pio device monitor -b 115200
 
 `make all` wraps the firmware and filesystem builds and packages all downloadable components. The generated browser installer writes bootloader, partition table, OTA bootstrap, application and LittleFS at their ESP32-S3 offsets. `firmware.bin` is also retained separately for subsequent OTA updates.
 
-The pinned Espressif32 platform uses Arduino-ESP32. `ARDUINO_USB_MODE=0` selects the ESP32-S3 native USB OTG peripheral and `ARDUINO_USB_CDC_ON_BOOT=1` enables CDC alongside `USBHIDKeyboard`. If upload becomes difficult, hold BOOT, tap RESET, release BOOT, and select the new serial port.
+The pinned Espressif32 platform uses Arduino-ESP32. The XIAO board definition already enables CDC on boot; the project replaces its `ARDUINO_USB_MODE=1` default with `ARDUINO_USB_MODE=0` to select TinyUSB OTG and make CDC and `USBHIDKeyboard` available concurrently. Arduino-ESP32 exposes that native CDC endpoint as `Serial`. If upload becomes difficult, hold BOOT, tap RESET, release BOOT, and select the new serial port.
 
 ## 4. First Wi-Fi setup
 
