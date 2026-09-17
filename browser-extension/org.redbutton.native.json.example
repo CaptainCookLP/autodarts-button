@@ -1,0 +1,2 @@
+{"name":"org.redbutton.native","description":"Red Button native messaging host","path":"/opt/redbutton/native-host.py","type":"stdio","allowed_origins":["chrome-extension://REPLACE_WITH_EXTENSION_ID/"]}
+
