@@ -1,173 +1,236 @@
-# Red Button for XIAO ESP32-S3
+# 🔴 Autodarts Button
 
-A maintainable, locally managed programmable button. The firmware exposes native USB HID keyboard **and** USB CDC serial concurrently, a responsive no-CDN control panel, Wi-Fi provisioning, NVS configuration and dual-slot browser OTA. A defensive Linux daemon and a Chromium extension example complete the project.
+Ein großer, frei programmierbarer USB-Button für den **Seeed Studio XIAO ESP32-S3**.
 
-## Schnellstart: ein Befehl oder direkt im Browser
+Der Button kann Tastenkombinationen senden oder sichere Aktionen auf einem Linux-Rechner auslösen. Die Einrichtung erfolgt bequem über eine lokale Webseite – ohne Cloud und ohne Programmierkenntnisse.
 
-Nach dem Klonen erzeugt **ein Befehl** Firmware, Web-Installer, Extension, Linux-Paket und SHA-256-Prüfsummen:
+## Was kann das Tool?
 
-```bash
-make all
-```
+- **USB-Tastenkombinationen senden**, zum Beispiel `Ctrl + Shift + K`, Pfeiltasten oder F-Tasten
+- **Linux-Aktionen auslösen**, zum Beispiel Präsentation weiterschalten, Mikrofon stummschalten oder ein eigenes Skript starten
+- Aktionen über ein **einfaches Webinterface** konfigurieren
+- WLAN beim ersten Start über einen eigenen Setup-Hotspot einrichten
+- Firmware später direkt im Webinterface aktualisieren
+- Einstellungen exportieren, importieren oder vollständig zurücksetzen
+- Als USB-Tastatur und USB-Serial-Gerät gleichzeitig arbeiten
+- Tastendrücke zuverlässig entprellen und pro Druck nur einmal auslösen
+- Optional mit einer Chrome-/Chromium-Extension zusammenarbeiten
 
-Die Ergebnisse liegen danach unter `dist/`. Für eine lokale Installationswebsite genügt ebenfalls eine Zeile:
+Alle Einstellungen werden lokal auf dem Gerät gespeichert. Es werden keine Cloud-Dienste benötigt.
 
-```bash
-python3 -m http.server 8000 --directory dist
-```
+## Screenshots
 
-Anschließend `http://localhost:8000/installer/` in Chrome oder Edge öffnen und den XIAO direkt per Web Serial flashen. Alternativ baut GitHub Actions bei jedem Push dieselben Dateien und veröffentlicht die Installationsseite über GitHub Pages. Unter **Settings → Pages → Source** muss dafür einmalig **GitHub Actions** gewählt werden. Ein Tag wie `v1.0.0` erzeugt zusätzlich einen GitHub Release mit Firmware, Extension, Linux-Paket und Prüfsummen.
+### Webinterface
 
-> Web-Flashing benötigt wegen Web Serial einen Chromium-basierten Desktop-Browser und HTTPS (localhost ist ebenfalls erlaubt). Safari, Firefox, iOS und gewöhnliche mobile Browser können ein ESP32-S3 nicht direkt über USB flashen.
-## 1. Project overview
+> 📷 **Coming soon**
 
-| Directory | Purpose |
-|---|---|
-| `src/`, `include/` | Componentized Arduino firmware |
-| `data/` | LittleFS web UI, uploaded separately from firmware |
-| `linux/` | pyserial daemon, systemd unit, udev rule |
-| `browser-extension/` | Manifest V3 HID example and native host skeleton |
-| `docs/` | Architecture, extension and rollback decisions |
-| `web-installer/` | ESP Web Tools installer for Chrome/Edge |
-| `scripts/`, `Makefile` | one-command builds and Linux installation |
+Hier wird das Webinterface zur Auswahl der Button-Aktion, Tastenkombination und WLAN-Konfiguration zu sehen sein.
 
-Firmware version is defined centrally as `REDBUTTON_VERSION` in `platformio.ini`. Configuration schema version 1 is stored in the `redbutton` NVS namespace. Unknown schema versions are reset safely; add explicit migrations before incrementing it.
+### Browser-Installer
 
-## 2. Hardware and wiring
+> 📷 **Coming soon**
 
-Target: Seeed Studio XIAO ESP32-S3 (native USB-C, Wi-Fi; battery optional). The default input is board pin `D1`. The external button must be a dry, normally-open contact—do not inject voltage.
+Hier wird die Installation der Firmware direkt aus Chrome oder Edge zu sehen sein.
+
+### Hardware
+
+> 📷 **Coming soon**
+
+Hier folgen Bilder des XIAO ESP32-S3 und der Verkabelung mit einem großen externen Taster.
+
+## Installation
+
+### 1. Button anschließen
+
+Der Taster wird als potentialfreier **NO-Kontakt** angeschlossen:
 
 ```text
-               XIAO ESP32-S3
-             +---------------+
-Button NO ---| D1 / GPIO     |  configured INPUT_PULLUP
-Button COM --| GND           |
-             +-------+-------+
-                     |
-                  USB-C ---- Linux / browser host
+Button NO  ───── XIAO D1 / GPIO
+Button COM ───── XIAO GND
 ```
 
-The stable LOW transition is accepted after 35 ms and fires once. Holding the button cannot retrigger it; it must be released and pressed again.
+Der interne Pull-up des ESP32-S3 wird automatisch verwendet. Es ist kein zusätzlicher Widerstand erforderlich.
 
-## 3. PlatformIO setup, build and flash
+### 2. Firmware im Browser installieren
 
-Install VS Code + PlatformIO, or [PlatformIO Core](https://platformio.org/install/cli). Then:
+1. XIAO ESP32-S3 mit einem USB-**Datenkabel** am Computer anschließen.
+2. Den Installer in **Google Chrome** oder **Microsoft Edge** öffnen:
+
+   ## 👉 [Red Button jetzt installieren](https://captaincooklp.github.io/autodarts-button/installer/)
+
+3. Auf **Firmware installieren** klicken.
+4. Den angezeigten USB-/JTAG-Port auswählen.
+5. Warten, bis die Installation abgeschlossen ist.
+
+Falls das Board nicht angezeigt wird:
+
+1. **BOOT** gedrückt halten.
+2. **RESET** kurz drücken.
+3. **BOOT** loslassen.
+4. Die Installation erneut starten.
+
+> Der Browser-Installer benötigt Chrome oder Edge auf einem Desktop-Computer. Firefox, Safari und die meisten mobilen Browser unterstützen das notwendige Web Serial nicht.
+
+### 3. WLAN einrichten
+
+Nach dem ersten Start öffnet der Button ein WLAN mit einem Namen wie:
+
+```text
+RedButton-1A2B
+```
+
+1. Mit diesem WLAN verbinden.
+2. [http://192.168.4.1](http://192.168.4.1) öffnen.
+3. Das eigene WLAN auswählen und das Passwort eingeben.
+4. Speichern und den Button neu starten lassen.
+
+Danach ist das Webinterface normalerweise hier erreichbar:
+
+## 👉 [http://redbutton.local](http://redbutton.local)
+
+Falls der Name nicht funktioniert, kann die vom Router vergebene IP-Adresse verwendet werden.
+
+## Button konfigurieren
+
+Im Bereich **Button Action** stehen drei Betriebsarten zur Auswahl:
+
+### Disabled
+
+Der Tastendruck löst nichts aus.
+
+### USB HID Shortcut
+
+Der Button verhält sich wie eine USB-Tastatur. Im Webinterface können Taste und Modifier gewählt werden:
+
+- Ctrl
+- Shift
+- Alt
+- GUI / Windows / Super
+- Buchstaben und Ziffern
+- Pfeil-, Enter-, Tab-, Escape- und Leertaste
+- F1 bis F12
+
+Beispiel: `Ctrl + Shift + K`
+
+### USB Serial Event
+
+Der Button sendet eine Action-ID an den Linux-Dienst, zum Beispiel:
+
+```text
+presentation_next
+mute
+custom_1
+```
+
+Nur Aktionen, die lokal auf dem Linux-Rechner freigegeben wurden, können ausgeführt werden. Vom Button empfangene Texte werden niemals direkt als Shell-Befehl verwendet.
+
+## Linux-Dienst installieren
+
+Der Linux-Dienst wird nur für **USB Serial Events** benötigt. Für normale Tastenkombinationen ist keine zusätzliche Software notwendig.
+
+1. Auf der [Installer-Seite](https://captaincooklp.github.io/autodarts-button/installer/) das **Linux-Dienst**-Paket herunterladen.
+2. Archiv entpacken.
+3. Im entpackten Ordner ausführen:
 
 ```bash
-pio run
-pio run -t upload
-pio run -t uploadfs       # required once and whenever data/ changes
-pio device monitor -b 115200
+sudo ./scripts/install-linux.sh
 ```
 
-`make all` wraps the firmware and filesystem builds and packages all downloadable components. The generated browser installer writes bootloader, partition table, OTA bootstrap, application and LittleFS at their ESP32-S3 offsets. `firmware.bin` is also retained separately for subsequent OTA updates.
+4. Danach die erlaubten Aktionen konfigurieren:
 
-The pinned Espressif32 platform uses Arduino-ESP32. `ARDUINO_USB_MODE=0` selects the ESP32-S3 native USB OTG peripheral and `ARDUINO_USB_CDC_ON_BOOT=1` enables CDC alongside `USBHIDKeyboard`. If upload becomes difficult, hold BOOT, tap RESET, release BOOT, and select the new serial port.
+```bash
+sudo nano /etc/redbutton/actions.json
+```
 
-## 4. First Wi-Fi setup
-
-Without stored credentials—or after a 15-second failed connection—the device creates `RedButton-XXXX`. Join it and open **http://192.168.4.1**. Scan, choose an SSID, enter its password, save and reboot. In the LAN use **http://redbutton.local** or the IP shown by your router. Credentials are held in NVS, omitted from config export and never logged.
-
-To recover from bad credentials, let connection timeout and use the setup AP. Factory reset is available under System and requires typing `RESET`; it erases Wi-Fi and action settings.
-
-## 5. Web interface and REST API
-
-Status displays device/firmware, uptime, SSID, IP, RSSI, USB CDC-open state, current action and last event. Button settings offer Disabled, HID shortcut and serial event. The test button uses exactly the same action dispatcher as the physical input.
-
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/api/status` | live state |
-| GET/POST | `/api/config` | export/update non-secret action config |
-| GET | `/api/config/export` | download non-secret JSON |
-| GET | `/api/wifi/scan` | up to 30 networks |
-| POST | `/api/wifi` | store SSID/password; reboot required |
-| POST | `/api/action/test` | run configured action |
-| POST | `/api/system/reboot` | reboot |
-| POST | `/api/system/factory-reset` | requires `X-Confirm-Reset: RESET` |
-| POST | `/api/ota` | multipart `.bin` upload |
-
-Inputs have length, range and character validation. This LAN-oriented release has no login: the server boundary is prepared for authentication middleware, but the device **must not be port-forwarded** to the Internet.
-
-## 6. HID configuration
-
-Select modifiers and a key (letters, digits, navigation, F1–F12). The Arduino USB keyboard API used here exposes F1–F12; F13–F24 are deliberately not advertised because portable constants are unavailable in the pinned core. HID sends modifiers, presses the key briefly, then releases all keys. On macOS, GUI maps to Command; elsewhere it maps to Windows/Super.
-
-## 7. USB serial protocol
-
-CDC emits one UTF-8 JSON object per line, for example:
+Beispiel:
 
 ```json
-{"event":"button","action":"presentation_next"}
+{
+  "actions": {
+    "presentation_next": ["/usr/local/bin/presentation-next.sh"],
+    "mute": ["/usr/local/bin/toggle-mute.sh"],
+    "custom_1": ["/usr/local/bin/custom-action.sh"]
+  }
+}
 ```
 
-Action IDs contain only ASCII letters, digits, `_` or `-` and are at most 64 characters. Firmware never accepts or sends shell commands. CDC debug output is intentionally minimal; consumers must ignore JSON objects whose `event` is not `button`.
-
-## 8. OTA update
-
-Build with `pio run`; upload `.pio/build/seeed_xiao_esp32s3/firmware.bin` in Firmware Update. The handler rejects non-`.bin` names and checks all `Update` writes. `partitions.csv` contains NVS, OTA metadata, two 1.75 MiB application slots and LittleFS. Do not upload `littlefs.bin` as firmware.
-
-Dual slots keep an interrupted upload from replacing the running image, but application-confirmed rollback is not enabled by Arduino `Update`; see [the architecture notes](docs/ARCHITECTURE.md). Perform initial and recovery updates over USB and keep a known-good binary.
-
-## 9. Linux daemon installation
-
-From a source checkout, installation is one command:
+Status und Log anzeigen:
 
 ```bash
-make install-linux
-```
-
-From the website download `redbutton-linux.tar.gz`, extract it, and run `sudo ./scripts/install-linux.sh`. The script creates the restricted user and virtual environment, preserves an existing allowlist, installs systemd/udev definitions and starts the service. Its Python package installation requires Internet access. The equivalent manual procedure is:
-```bash
-sudo useradd --system --no-create-home --groups dialout redbutton
-sudo mkdir -p /opt/redbutton /etc/redbutton
-sudo cp linux/redbutton-daemon/redbutton_daemon.py /opt/redbutton/
-sudo cp linux/redbutton-daemon/actions.example.json /etc/redbutton/actions.json
-sudo python3 -m venv /opt/redbutton/venv
-sudo /opt/redbutton/venv/bin/pip install -r linux/redbutton-daemon/requirements.txt
-sudo cp linux/systemd/redbutton-daemon.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable --now redbutton-daemon
+systemctl status redbutton-daemon
 journalctl -u redbutton-daemon -f
 ```
 
-Edit `/etc/redbutton/actions.json`. Each value is an argv array and is executed with `shell=False`; only exact IDs in that local allowlist run. Scripts should be root-owned and not writable by the `redbutton` user. The daemon reconnects every two seconds after unplugging.
+Der Dienst verbindet sich nach dem Abziehen des USB-Kabels automatisch erneut.
 
-## 10. udev stable device name
+## Browser-Extension installieren
+
+Die Extension ist optional. Sie kann auf einen vom Button gesendeten Shortcut reagieren und anschließend eine Browser-Aktion ausführen.
+
+1. Auf der [Installer-Seite](https://captaincooklp.github.io/autodarts-button/installer/) die **Chrome Extension** herunterladen.
+2. ZIP-Datei entpacken.
+3. `chrome://extensions` öffnen.
+4. **Entwicklermodus** aktivieren.
+5. **Entpackte Erweiterung laden** wählen.
+6. Den entpackten Extension-Ordner auswählen.
+
+Der Beispiel-Shortcut ist `Ctrl + Shift + K`. Er kann unter `chrome://extensions/shortcuts` angepasst werden.
+
+## Firmware aktualisieren
+
+Nach der Erstinstallation können Updates ohne erneutes vollständiges Flashen installiert werden:
+
+1. `http://redbutton.local` öffnen.
+2. Unter **Firmware Update** die neue `firmware.bin` auswählen.
+3. Upload starten.
+4. Den automatischen Neustart abwarten.
+
+Während eines Updates darf die Stromversorgung nicht getrennt werden.
+
+## Zurücksetzen
+
+Im Bereich **System** kann das Gerät neu gestartet oder auf Werkseinstellungen zurückgesetzt werden. Beim Factory Reset werden WLAN- und Button-Einstellungen gelöscht. Zur Sicherheit muss der Vorgang ausdrücklich mit `RESET` bestätigt werden.
+
+## Probleme?
+
+### Der Installer findet den XIAO nicht
+
+- Anderes USB-Kabel testen – viele Kabel können nur laden.
+- Chrome oder Edge verwenden.
+- BOOT gedrückt halten, RESET kurz drücken und BOOT loslassen.
+
+### `redbutton.local` ist nicht erreichbar
+
+- Prüfen, ob Computer und Button im gleichen WLAN sind.
+- Die IP-Adresse im Router nachsehen.
+- Nach einem fehlgeschlagenen WLAN-Start erneut mit `RedButton-XXXX` verbinden.
+
+### Der Tastendruck löst nichts aus
+
+- Verkabelung zwischen `D1` und `GND` prüfen.
+- Im Webinterface kontrollieren, ob die Action auf **Disabled** steht.
+- Mit **Test Action** prüfen, ob die konfigurierte Aktion grundsätzlich funktioniert.
+
+### Der Linux-Dienst reagiert nicht
 
 ```bash
-sudo cp linux/udev/99-redbutton.rules /etc/udev/rules.d/
-sudo udevadm control --reload-rules
-sudo udevadm trigger
-udevadm info --attribute-walk /dev/ttyACM0
+systemctl status redbutton-daemon
+journalctl -u redbutton-daemon -f
 ```
 
-The rule matches Espressif's default VID `303a` plus product string and creates `/dev/redbutton`. Confirm actual values with `udevadm`; customized Arduino USB VID/PID build flags or core updates require adjusting the rule. `USB.productName()` sets the product. The S3 exposes a chip-derived USB serial by default; add a verified `USB.serialNumber(...)` before `USB.begin()` if deployments require a fixed custom serial.
+Außerdem prüfen, ob die verwendete Action-ID in `/etc/redbutton/actions.json` vorhanden ist.
 
-## 11. Chromium extension
+## Downloads
 
-### Variant A: HID (recommended)
+Alle benötigten Downloads befinden sich auf einer Seite:
 
-Open `chrome://extensions`, enable Developer mode, choose **Load unpacked**, and select `browser-extension/`. Configure firmware to Ctrl+Shift+K. Chrome's `commands` API receives it without a bridge; the sample reloads the active tab. Change `background.js` to the desired browser-only behavior. Shortcut conflicts can be resolved at `chrome://extensions/shortcuts`.
+## 👉 [https://captaincooklp.github.io/autodarts-button/installer/](https://captaincooklp.github.io/autodarts-button/installer/)
 
-The build website offers `redbutton-extension.zip`; unpack it first and select the resulting directory with **Load unpacked**. Chrome deliberately does not allow a normal website to silently install an unpacked extension. A true one-click extension installation would require publishing and signing it through the Chrome Web Store.
-### Variant B: native messaging
+- Firmware-Installer
+- Chrome-/Chromium-Extension
+- Linux-Dienst
+- SHA-256-Prüfsummen
 
-The intended flow is ESP CDC → allowlisting daemon → separately supervised native bridge → extension. `native-host.py` demonstrates Chrome's length-prefixed output and a second allowlist; `org.redbutton.native.json.example` documents host registration. Production integration must add the extension ID, `nativeMessaging` permission, `connectNative()` and IPC from the long-running daemon. See `docs/ARCHITECTURE.md`; do not weaken the daemon into executing browser-supplied commands.
+## Lizenz
 
-## 12. Configuration backup/import
-
-Export downloads action and device settings but never Wi-Fi secrets. Import accepts that JSON through the System panel (or it can be posted to `/api/config`). Wi-Fi is intentionally restored separately.
-
-## 13. Troubleshooting
-
-* **No web UI:** upload LittleFS with `pio run -t uploadfs`; try the IP if `.local` is unavailable.
-* **No setup AP:** wait at least 15 seconds; power-cycle. Its default address is `192.168.4.1`.
-* **HID absent:** use the native USB-C data connection and ensure the build flags were not overridden.
-* **Serial absent:** inspect `dmesg`, `pio device list`, and udev attributes; some charge-only cables have no data lines.
-* **Repeated presses:** verify NO-to-GND wiring and avoid long unshielded cable runs; increase `debounceMs` if necessary.
-* **OTA rejects image:** use the application `firmware.bin`, not filesystem or factory images; recover through USB.
-* **Daemon does nothing:** check `/dev/redbutton`, membership in `dialout`, JSON syntax and `journalctl`.
-
-## 14. Hardware validation checklist
-
-Software builds/tests cannot prove electrical behavior. On the target, verify native HID+CDC enumeration on Linux/macOS/Windows; one event per press including contact bounce and long holds; reconnection and AP fallback; mDNS; all desired host keyboard layouts; battery behavior; OTA success, interrupted-upload recovery and USB recovery; daemon unplug/replug; and the actual VID/PID/product/serial values.
+Dieses Projekt steht unter der [GNU General Public License v3.0](LICENSE).
