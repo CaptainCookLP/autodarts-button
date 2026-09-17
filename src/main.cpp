@@ -18,5 +18,6 @@ void setup() {
   button.begin([] { action.trigger(); });
   wifi.begin(config.get().wifiSsid, config.get().wifiPassword, config.get().deviceName);
   web.begin();
+  Serial.println("[redbutton] ready (credentials are never logged)");
 }
 void loop() { button.loop(); wifi.loop(); web.loop(); delay(1); }

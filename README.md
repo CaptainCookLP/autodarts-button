@@ -19,7 +19,6 @@ python3 -m http.server 8000 --directory dist
 Anschließend `http://localhost:8000/installer/` in Chrome oder Edge öffnen und den XIAO direkt per Web Serial flashen. Alternativ baut GitHub Actions bei jedem Push dieselben Dateien und veröffentlicht die Installationsseite über GitHub Pages. Unter **Settings → Pages → Source** muss dafür einmalig **GitHub Actions** gewählt werden. Ein Tag wie `v1.0.0` erzeugt zusätzlich einen GitHub Release mit Firmware, Extension, Linux-Paket und Prüfsummen.
 
 > Web-Flashing benötigt wegen Web Serial einen Chromium-basierten Desktop-Browser und HTTPS (localhost ist ebenfalls erlaubt). Safari, Firefox, iOS und gewöhnliche mobile Browser können ein ESP32-S3 nicht direkt über USB flashen.
-
 ## 1. Project overview
 
 | Directory | Purpose |
@@ -63,7 +62,7 @@ pio device monitor -b 115200
 
 `make all` wraps the firmware and filesystem builds and packages all downloadable components. The generated browser installer writes bootloader, partition table, OTA bootstrap, application and LittleFS at their ESP32-S3 offsets. `firmware.bin` is also retained separately for subsequent OTA updates.
 
-The pinned Espressif32 platform uses Arduino-ESP32. The XIAO board definition already enables CDC on boot; the project replaces its `ARDUINO_USB_MODE=1` default with `ARDUINO_USB_MODE=0` to select TinyUSB OTG and make CDC and `USBHIDKeyboard` available concurrently. Arduino-ESP32 exposes that native CDC endpoint as `Serial`. If upload becomes difficult, hold BOOT, tap RESET, release BOOT, and select the new serial port.
+The pinned Espressif32 platform uses Arduino-ESP32. `ARDUINO_USB_MODE=0` selects the ESP32-S3 native USB OTG peripheral and `ARDUINO_USB_CDC_ON_BOOT=1` enables CDC alongside `USBHIDKeyboard`. If upload becomes difficult, hold BOOT, tap RESET, release BOOT, and select the new serial port.
 
 ## 4. First Wi-Fi setup
 
@@ -118,7 +117,6 @@ make install-linux
 ```
 
 From the website download `redbutton-linux.tar.gz`, extract it, and run `sudo ./scripts/install-linux.sh`. The script creates the restricted user and virtual environment, preserves an existing allowlist, installs systemd/udev definitions and starts the service. Its Python package installation requires Internet access. The equivalent manual procedure is:
-
 ```bash
 sudo useradd --system --no-create-home --groups dialout redbutton
 sudo mkdir -p /opt/redbutton /etc/redbutton
@@ -152,7 +150,6 @@ The rule matches Espressif's default VID `303a` plus product string and creates 
 Open `chrome://extensions`, enable Developer mode, choose **Load unpacked**, and select `browser-extension/`. Configure firmware to Ctrl+Shift+K. Chrome's `commands` API receives it without a bridge; the sample reloads the active tab. Change `background.js` to the desired browser-only behavior. Shortcut conflicts can be resolved at `chrome://extensions/shortcuts`.
 
 The build website offers `redbutton-extension.zip`; unpack it first and select the resulting directory with **Load unpacked**. Chrome deliberately does not allow a normal website to silently install an unpacked extension. A true one-click extension installation would require publishing and signing it through the Chrome Web Store.
-
 ### Variant B: native messaging
 
 The intended flow is ESP CDC → allowlisting daemon → separately supervised native bridge → extension. `native-host.py` demonstrates Chrome's length-prefixed output and a second allowlist; `org.redbutton.native.json.example` documents host registration. Production integration must add the extension ID, `nativeMessaging` permission, `connectNative()` and IPC from the long-running daemon. See `docs/ARCHITECTURE.md`; do not weaken the daemon into executing browser-supplied commands.
