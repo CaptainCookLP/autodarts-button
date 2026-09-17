@@ -1,0 +1,19 @@
+[Unit]
+Description=Red Button USB event daemon
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/opt/redbutton/venv/bin/python /opt/redbutton/redbutton_daemon.py --config /etc/redbutton/actions.json
+Restart=always
+RestartSec=2
+User=redbutton
+SupplementaryGroups=dialout
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
+
