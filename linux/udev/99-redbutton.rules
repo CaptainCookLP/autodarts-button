@@ -1,0 +1,3 @@
+# Verify ATTRS values with: udevadm info --attribute-walk /dev/ttyACM0
+SUBSYSTEM=="tty", ATTRS{idVendor}=="303a", ATTRS{product}=="Red Button", SYMLINK+="redbutton", GROUP="dialout", MODE="0660"
+

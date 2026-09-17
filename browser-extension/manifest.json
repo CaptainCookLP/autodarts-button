@@ -1,0 +1,2 @@
+{"manifest_version":3,"name":"Red Button Example","version":"1.0.0","description":"Runs a safe browser action from the configured HID shortcut.","background":{"service_worker":"background.js"},"commands":{"red-button":{"suggested_key":{"default":"Ctrl+Shift+K","mac":"Command+Shift+K"},"description":"Activate Red Button"}},"action":{"default_title":"Red Button"}}
+
