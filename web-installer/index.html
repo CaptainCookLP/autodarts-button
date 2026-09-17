@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Red Button installieren</title>
+  <script type="module" src="https://unpkg.com/esp-web-tools@10.1.1/dist/web/install-button.js"></script>
+  <style>
+    :root{color-scheme:dark;--red:#e53935}*{box-sizing:border-box}body{margin:0;background:#0d1117;color:#e6edf3;font:16px system-ui,sans-serif}main{max-width:720px;margin:8vh auto;padding:28px;background:#161b22;border:1px solid #30363d;border-radius:16px}h1{margin-top:0}.red{color:var(--red)}.steps{line-height:1.8}esp-web-install-button{display:block;margin:24px 0}a{color:#58a6ff}.downloads{display:flex;gap:12px;flex-wrap:wrap}.downloads a{padding:10px 14px;background:#30363d;border-radius:8px;text-decoration:none}.note{color:#8b949e;font-size:14px}code{background:#0d1117;padding:2px 5px;border-radius:4px}
+  </style>
+</head>
+<body><main>
+  <h1><span class="red">●</span> Red Button installieren</h1>
+  <ol class="steps"><li>XIAO ESP32-S3 per USB-Datenkabel anschließen.</li><li>Chrome oder Edge verwenden und auf „Installieren“ klicken.</li><li>Den USB/JTAG-Port auswählen. Bei Problemen BOOT halten, RESET kurz drücken und BOOT loslassen.</li></ol>
+  <esp-web-install-button manifest="manifest.json"><button slot="activate">Firmware installieren</button><span slot="unsupported">Dieser Browser unterstützt Web Serial nicht. Bitte Chrome oder Edge verwenden.</span></esp-web-install-button>
+  <p class="note">Eine Neuinstallation kann Einstellungen löschen. Spätere Updates sind im Geräte-Webinterface über <code>firmware.bin</code> möglich.</p>
+  <h2>Weitere Downloads</h2>
+  <div class="downloads"><a href="../redbutton-extension.zip" download>Chrome Extension</a><a href="../redbutton-linux.tar.gz" download>Linux-Dienst</a><a href="../SHA256SUMS" download>Prüfsummen</a></div>
+</main></body></html>
+

@@ -2,6 +2,23 @@
 
 A maintainable, locally managed programmable button. The firmware exposes native USB HID keyboard **and** USB CDC serial concurrently, a responsive no-CDN control panel, Wi-Fi provisioning, NVS configuration and dual-slot browser OTA. A defensive Linux daemon and a Chromium extension example complete the project.
 
+## Schnellstart: ein Befehl oder direkt im Browser
+
+Nach dem Klonen erzeugt **ein Befehl** Firmware, Web-Installer, Extension, Linux-Paket und SHA-256-Prüfsummen:
+
+```bash
+make all
+```
+
+Die Ergebnisse liegen danach unter `dist/`. Für eine lokale Installationswebsite genügt ebenfalls eine Zeile:
+
+```bash
+python3 -m http.server 8000 --directory dist
+```
+
+Anschließend `http://localhost:8000/installer/` in Chrome oder Edge öffnen und den XIAO direkt per Web Serial flashen. Alternativ baut GitHub Actions bei jedem Push dieselben Dateien und veröffentlicht die Installationsseite über GitHub Pages. Unter **Settings → Pages → Source** muss dafür einmalig **GitHub Actions** gewählt werden. Ein Tag wie `v1.0.0` erzeugt zusätzlich einen GitHub Release mit Firmware, Extension, Linux-Paket und Prüfsummen.
+
+> Web-Flashing benötigt wegen Web Serial einen Chromium-basierten Desktop-Browser und HTTPS (localhost ist ebenfalls erlaubt). Safari, Firefox, iOS und gewöhnliche mobile Browser können ein ESP32-S3 nicht direkt über USB flashen.
 ## 1. Project overview
 
 | Directory | Purpose |
@@ -11,6 +28,8 @@ A maintainable, locally managed programmable button. The firmware exposes native
 | `linux/` | pyserial daemon, systemd unit, udev rule |
 | `browser-extension/` | Manifest V3 HID example and native host skeleton |
 | `docs/` | Architecture, extension and rollback decisions |
+| `web-installer/` | ESP Web Tools installer for Chrome/Edge |
+| `scripts/`, `Makefile` | one-command builds and Linux installation |
 
 Firmware version is defined centrally as `REDBUTTON_VERSION` in `platformio.ini`. Configuration schema version 1 is stored in the `redbutton` NVS namespace. Unknown schema versions are reset safely; add explicit migrations before incrementing it.
 
@@ -40,6 +59,8 @@ pio run -t upload
 pio run -t uploadfs       # required once and whenever data/ changes
 pio device monitor -b 115200
 ```
+
+`make all` wraps the firmware and filesystem builds and packages all downloadable components. The generated browser installer writes bootloader, partition table, OTA bootstrap, application and LittleFS at their ESP32-S3 offsets. `firmware.bin` is also retained separately for subsequent OTA updates.
 
 The pinned Espressif32 platform uses Arduino-ESP32. `ARDUINO_USB_MODE=0` selects the ESP32-S3 native USB OTG peripheral and `ARDUINO_USB_CDC_ON_BOOT=1` enables CDC alongside `USBHIDKeyboard`. If upload becomes difficult, hold BOOT, tap RESET, release BOOT, and select the new serial port.
 
@@ -89,6 +110,13 @@ Dual slots keep an interrupted upload from replacing the running image, but appl
 
 ## 9. Linux daemon installation
 
+From a source checkout, installation is one command:
+
+```bash
+make install-linux
+```
+
+From the website download `redbutton-linux.tar.gz`, extract it, and run `sudo ./scripts/install-linux.sh`. The script creates the restricted user and virtual environment, preserves an existing allowlist, installs systemd/udev definitions and starts the service. Its Python package installation requires Internet access. The equivalent manual procedure is:
 ```bash
 sudo useradd --system --no-create-home --groups dialout redbutton
 sudo mkdir -p /opt/redbutton /etc/redbutton
@@ -121,6 +149,7 @@ The rule matches Espressif's default VID `303a` plus product string and creates 
 
 Open `chrome://extensions`, enable Developer mode, choose **Load unpacked**, and select `browser-extension/`. Configure firmware to Ctrl+Shift+K. Chrome's `commands` API receives it without a bridge; the sample reloads the active tab. Change `background.js` to the desired browser-only behavior. Shortcut conflicts can be resolved at `chrome://extensions/shortcuts`.
 
+The build website offers `redbutton-extension.zip`; unpack it first and select the resulting directory with **Load unpacked**. Chrome deliberately does not allow a normal website to silently install an unpacked extension. A true one-click extension installation would require publishing and signing it through the Chrome Web Store.
 ### Variant B: native messaging
 
 The intended flow is ESP CDC → allowlisting daemon → separately supervised native bridge → extension. `native-host.py` demonstrates Chrome's length-prefixed output and a second allowlist; `org.redbutton.native.json.example` documents host registration. Production integration must add the extension ID, `nativeMessaging` permission, `connectNative()` and IPC from the long-running daemon. See `docs/ARCHITECTURE.md`; do not weaken the daemon into executing browser-supplied commands.
