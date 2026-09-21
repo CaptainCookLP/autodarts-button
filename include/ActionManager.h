@@ -4,7 +4,7 @@
 class ActionManager {
  public:
   ActionManager(const AppConfig& config, USBManager& usb) : config_(config), usb_(usb) {}
-  bool trigger();
+  bool trigger(uint8_t index);
   const String& lastEvent() const { return lastEvent_; }
   static const char* name(ActionType type);
  private:

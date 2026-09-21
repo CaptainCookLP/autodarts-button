@@ -10,6 +10,7 @@ class ConfigManager {
   bool factoryReset();
   static bool validName(const String& value);
   static bool validActionId(const String& value);
+  static bool validGpio(int gpio);
  private:
   Preferences preferences_;
   AppConfig config_;

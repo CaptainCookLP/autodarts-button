@@ -4,11 +4,12 @@
 #include "ConfigManager.h"
 #include "WiFiManager.h"
 #include "ActionManager.h"
+#include "UpdateManager.h"
 class WebServerManager {
  public:
-  WebServerManager(ConfigManager& c, WiFiManager& w, ActionManager& a, USBManager& u) : config_(c), wifi_(w), action_(a), usb_(u), server_(80) {}
+  WebServerManager(ConfigManager& c, WiFiManager& w, ActionManager& a, USBManager& u, UpdateManager& up) : config_(c), wifi_(w), action_(a), usb_(u), updater_(up), server_(80) {}
   void begin(); void loop() { server_.handleClient(); }
  private:
   void routes(); void json(int status, const String& body); bool parseBody(JsonDocument& doc);
-  ConfigManager& config_; WiFiManager& wifi_; ActionManager& action_; USBManager& usb_; WebServer server_;
+  ConfigManager& config_; WiFiManager& wifi_; ActionManager& action_; USBManager& usb_; UpdateManager& updater_; WebServer server_;
 };

@@ -3,15 +3,17 @@
 #include "ButtonManager.h"
 #include "ConfigManager.h"
 #include "USBManager.h"
+#include "UpdateManager.h"
 #include "WebServerManager.h"
 #include "WiFiManager.h"
 
 ConfigManager config;
 USBManager usb;
 WiFiManager wifi;
-ButtonManager button(D1);
+ButtonManager buttons[AppConfig::MAX_BUTTONS];
 ActionManager action(config.get(), usb);
-WebServerManager web(config, wifi, action, usb);
+UpdateManager updater(REDBUTTON_VERSION);
+WebServerManager web(config, wifi, action, usb, updater);
 
 void setup() {
   Serial.begin(115200);
@@ -28,8 +30,19 @@ void setup() {
   usb.begin();
   Serial.println("[RedButton] usb ready");
 
-  button.begin([] { action.trigger(); });
+  const auto& cfg = config.get();
+  for (uint8_t i = 0; i < cfg.buttonCount; i++) {
+    if (cfg.buttons[i].gpio < 0) continue;
+    buttons[i].begin(cfg.buttons[i].gpio, [i] { action.trigger(i); });
+  }
+  Serial.printf("[RedButton] %d button(s) ready\n", cfg.buttonCount);
+
   web.begin();
   Serial.println("[RedButton] web server ready");
 }
-void loop() { button.loop(); wifi.loop(); web.loop(); delay(1); }
+void loop() {
+  for (uint8_t i = 0; i < config.get().buttonCount; i++) buttons[i].loop();
+  wifi.loop(); web.loop(); updater.loop();
+  delay(1);
+}
+
