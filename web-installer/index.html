@@ -6,7 +6,7 @@
   <title>Red Button installieren</title>
   <script type="module" src="https://unpkg.com/esp-web-tools@10.1.1/dist/web/install-button.js"></script>
   <style>
-    :root{color-scheme:dark;--red:#e53935}*{box-sizing:border-box}body{margin:0;background:#0d1117;color:#e6edf3;font:16px system-ui,sans-serif}main{max-width:720px;margin:8vh auto;padding:28px;background:#161b22;border:1px solid #30363d;border-radius:16px}h1{margin-top:0}.red{color:var(--red)}.steps{line-height:1.8}esp-web-install-button{display:block;margin:24px 0}a{color:#58a6ff}.downloads{display:flex;gap:12px;flex-wrap:wrap}.downloads a{padding:10px 14px;background:#30363d;border-radius:8px;text-decoration:none}.note{color:#8b949e;font-size:14px}code{background:#0d1117;padding:2px 5px;border-radius:4px}
+    :root{color-scheme:dark;--red:#e53935}*{box-sizing:border-box}body{margin:0;background:#0d1117;color:#e6edf3;font:16px system-ui,sans-serif}main{max-width:720px;margin:8vh auto;padding:28px;background:#161b22;border:1px solid #30363d;border-radius:16px}h1{margin-top:0}.red{color:var(--red)}.steps{line-height:1.8}esp-web-install-button{display:block;margin:24px 0}a{color:#58a6ff}.downloads{display:flex;gap:12px;flex-wrap:wrap}.downloads a{padding:10px 14px;background:#30363d;border-radius:8px;text-decoration:none}.note{color:#8b949e;font-size:14px}code{background:#0d1117;padding:2px 5px;border-radius:4px}.row{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}button.secondary{background:#30363d;color:#e6edf3;border:0;border-radius:8px;padding:10px 14px;cursor:pointer;font:inherit}#logsOutput{max-height:280px;overflow:auto;background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:12px;font:13px/1.5 ui-monospace,monospace;white-space:pre-wrap}
   </style>
 </head>
 <body><main>
@@ -14,7 +14,39 @@
   <ol class="steps"><li>XIAO ESP32-S3 per USB-Datenkabel anschließen.</li><li>Chrome oder Edge verwenden und auf „Installieren“ klicken.</li><li>Den USB/JTAG-Port auswählen. Bei Problemen BOOT halten, RESET kurz drücken und BOOT loslassen.</li></ol>
   <esp-web-install-button manifest="manifest.json"><button slot="activate">Firmware installieren</button><span slot="unsupported">Dieser Browser unterstützt Web Serial nicht. Bitte Chrome oder Edge verwenden.</span></esp-web-install-button>
   <p class="note">Eine Neuinstallation kann Einstellungen löschen. Spätere Updates sind im Geräte-Webinterface über <code>firmware.bin</code> möglich.</p>
+  <h2>Serielle Logs</h2>
+  <p class="note">Die Firmware unterstützt kein Improv-Protokoll, daher bietet der Installer selbst keine Logs an. Dieser Button öffnet stattdessen direkt eine Web-Serial-Verbindung zum Gerät.</p>
+  <div class="row"><button id="logsBtn" class="secondary">Live-Logs anzeigen</button><button id="logsStop" class="secondary" hidden>Logs beenden</button></div>
+  <pre id="logsOutput" hidden></pre>
   <h2>Weitere Downloads</h2>
   <div class="downloads"><a href="../redbutton-extension.zip" download>Chrome Extension</a><a href="../redbutton-linux.tar.gz" download>Linux-Dienst</a><a href="../SHA256SUMS" download>Prüfsummen</a></div>
-</main></body></html>
+</main>
+<script>
+  let logsPort, logsReader, logsKeepReading = false;
+  const logsBtn = document.getElementById('logsBtn'), logsStop = document.getElementById('logsStop'), logsOut = document.getElementById('logsOutput');
+  logsBtn.addEventListener('click', async () => {
+    if (!('serial' in navigator)) { alert('Web Serial wird von diesem Browser nicht unterstützt. Bitte Chrome oder Edge verwenden.'); return; }
+    try {
+      logsPort = await navigator.serial.requestPort();
+      await logsPort.open({ baudRate: 115200 });
+    } catch (e) { alert('Verbindung fehlgeschlagen: ' + e.message); return; }
+    logsOut.hidden = false; logsOut.textContent = ''; logsBtn.hidden = true; logsStop.hidden = false; logsKeepReading = true;
+    const decoder = new TextDecoderStream();
+    logsPort.readable.pipeTo(decoder.writable).catch(() => {});
+    logsReader = decoder.readable.getReader();
+    while (logsKeepReading) {
+      let chunk;
+      try { chunk = await logsReader.read(); } catch (e) { break; }
+      if (chunk.done) break;
+      if (chunk.value) { logsOut.textContent += chunk.value; logsOut.scrollTop = logsOut.scrollHeight; }
+    }
+  });
+  logsStop.addEventListener('click', async () => {
+    logsKeepReading = false;
+    try { await logsReader?.cancel(); } catch {}
+    try { await logsPort?.close(); } catch {}
+    logsBtn.hidden = false; logsStop.hidden = true;
+  });
+</script>
+</body></html>
 

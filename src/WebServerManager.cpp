@@ -9,9 +9,20 @@ bool WebServerManager::parseBody(JsonDocument& doc) {
   if (!server_.hasArg("plain") || server_.arg("plain").length() > 2048) { json(400, "{\"error\":\"invalid body\"}"); return false; }
   if (deserializeJson(doc, server_.arg("plain"))) { json(400, "{\"error\":\"invalid JSON\"}"); return false; } return true;
 }
-void WebServerManager::begin() { const char* headers[] = {"X-Confirm-Reset"}; server_.collectHeaders(headers, 1); LittleFS.begin(true); routes(); server_.begin(); }
+void WebServerManager::begin() {
+  const char* headers[] = {"X-Confirm-Reset"}; server_.collectHeaders(headers, 1);
+  // LittleFS.begin() defaults to a partition labeled "spiffs"; ours is named "littlefs" in partitions.csv.
+  const bool mounted = LittleFS.begin(false, "/littlefs", 10, "littlefs");
+  if (!mounted) { Serial.println("[RedButton] LittleFS mount failed, formatting..."); LittleFS.begin(true, "/littlefs", 10, "littlefs"); }
+  Serial.printf("[RedButton] LittleFS ready, index.html present=%d\n", LittleFS.exists("/index.html"));
+  routes(); server_.begin();
+}
 void WebServerManager::routes() {
-  server_.on("/", HTTP_GET, [this]{ File f=LittleFS.open("/index.html"); server_.streamFile(f,"text/html"); });
+  server_.on("/", HTTP_GET, [this]{
+    File f = LittleFS.open("/index.html");
+    if (!f) { json(500, "{\"error\":\"filesystem not flashed, run 'pio run -t uploadfs'\"}"); return; }
+    server_.streamFile(f, "text/html");
+  });
   server_.serveStatic("/app.js", LittleFS, "/app.js"); server_.serveStatic("/style.css", LittleFS, "/style.css");
   server_.on("/api/status", HTTP_GET, [this]{
     JsonDocument d; d["deviceName"]=config_.get().deviceName; d["firmware"]=REDBUTTON_VERSION; d["uptimeSeconds"]=millis()/1000;
