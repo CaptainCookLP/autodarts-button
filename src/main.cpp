@@ -32,9 +32,4 @@ void setup() {
   web.begin();
   Serial.println("[RedButton] web server ready");
 }
-void loop() {
-  button.loop(); wifi.loop(); web.loop();
-  static uint32_t lastBeat = 0;
-  if (millis() - lastBeat > 5000) { lastBeat = millis(); Serial.println("[RedButton] alive"); } // heartbeat to confirm the firmware is not stuck
-  delay(1);
-}
+void loop() { button.loop(); wifi.loop(); web.loop(); delay(1); }

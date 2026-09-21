@@ -8,6 +8,6 @@ class WiFiManager {
   String ip() const;
  private:
   void startAp();
-  bool apMode_ = false; uint32_t startedAt_ = 0; String hostname_;
+  bool apMode_ = false; uint32_t startedAt_ = 0; uint32_t lastReconnectAttempt_ = 0; String hostname_;
 };
 
