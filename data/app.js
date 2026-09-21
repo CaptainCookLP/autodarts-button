@@ -6,7 +6,21 @@ async function load(){const c=await api('/api/config');$('name').value=c.deviceN
 function toggle(){$('hid').hidden=$('type').value!='1';$('serial').hidden=$('type').value!='2'}$('type').onchange=toggle;
 $('save').onclick=async()=>{try{await post('/api/config',{deviceName:$('name').value,actionType:+$('type').value,hidKey:$('key').value,modifiers:($('ctrl').checked?1:0)|($('shift').checked?2:0)|($('alt').checked?4:0)|($('gui').checked?8:0),serialAction:$('event').value});$('actionResult').textContent='Saved.'}catch(e){$('actionResult').textContent=e.message}};
 $('test').onclick=()=>post('/api/action/test',{}).then(()=>{$('actionResult').textContent='Action sent.'}).catch(e=>$('actionResult').textContent=e.message);
-$('scan').onclick=async()=>{const networks=await api('/api/wifi/scan');$('ssid').innerHTML='';networks.forEach(n=>$('ssid').add(new Option(`${n.ssid} (${n.rssi} dBm)`,n.ssid)))};
+$('scan').onclick=async()=>{
+  const btn=$('scan');btn.disabled=true;btn.textContent='Scanning…';$('ssid').innerHTML='<option value="">Scanning…</option>';
+  try{
+    for(;;){
+      const d=await api('/api/wifi/scan');
+      if(Array.isArray(d)){
+        $('ssid').innerHTML='<option value="">Select or scan…</option>';
+        d.sort((a,b)=>b.rssi-a.rssi).forEach(n=>$('ssid').add(new Option(`${n.ssid} (${n.rssi} dBm)${n.secure?'':' \u{1F513}'}`,n.ssid)));
+        break;
+      }
+      await new Promise(r=>setTimeout(r,700));
+    }
+  }catch(e){$('wifiResult').textContent=e.message}
+  finally{btn.disabled=false;btn.textContent='Scan networks';}
+};
 $('saveWifi').onclick=async()=>{try{const ssid=$('ssidManual').value.trim()||$('ssid').value;await post('/api/wifi',{ssid,password:$('password').value});$('wifiResult').textContent='Saved. Rebooting…';setTimeout(()=>$('reboot').click(),500)}catch(e){$('wifiResult').textContent=e.message}};
 $('forgetWifi').onclick=async()=>{if(!confirm('Wi-Fi credentials will be erased and the device restarts its setup hotspot.'))return;try{await post('/api/wifi',{ssid:'',password:''});$('wifiResult').textContent='Forgotten. Rebooting…';setTimeout(()=>$('reboot').click(),500)}catch(e){$('wifiResult').textContent=e.message}};
 $('reboot').onclick=()=>post('/api/system/reboot',{});$('export').onclick=()=>location='/api/config/export';

@@ -14,16 +14,19 @@ static const char* statusName(wl_status_t s) {
 bool WiFiManager::begin(const String& ssid, const String& password, const String& hostname) {
   hostname_ = hostname;
   if (ssid.isEmpty()) { startAp(); return false; }
-  WiFi.persistent(false); // we already persist credentials ourselves via ConfigManager/NVS
-  WiFi.disconnect(true, true); // clear any stale STA/AP state left over from a previous run
-  WiFi.mode(WIFI_STA); WiFi.setHostname(hostname.c_str()); WiFi.begin(ssid.c_str(), password.c_str()); startedAt_ = millis();
+  WiFi.persistent(false); // we already persist credentials ourselves via ConfigManager/NVS; avoids extra flash wear
+  WiFi.mode(WIFI_STA);
+  WiFi.setHostname(hostname.c_str());
+  WiFi.setAutoReconnect(true); // let the driver handle reconnects after a temporary drop, per Espressif recommendation
+  WiFi.begin(ssid.c_str(), password.c_str());
+  startedAt_ = millis();
   wl_status_t status;
   while ((status = WiFi.status()) != WL_CONNECTED && millis() - startedAt_ < 15000) delay(100);
   if (status != WL_CONNECTED) {
     Serial.printf("[RedButton] WiFi STA connect failed: %s, starting setup AP\n", statusName(status));
     startAp(); return false;
   }
-  MDNS.begin(hostname.c_str()); MDNS.addService("http", "tcp", 80); apMode_ = false; return true;
+  MDNS.begin(hostname.c_str()); MDNS.addService("http", "tcp", 80); apMode_ = false; wasConnected_ = true; return true;
 }
 void WiFiManager::startAp() {
   WiFi.disconnect(true); WiFi.mode(WIFI_AP_STA);
@@ -32,10 +35,7 @@ void WiFiManager::startAp() {
 }
 void WiFiManager::loop() {
   if (apMode_) return; // deliberately retain the setup AP until credentials are saved and rebooted
-  if (WiFi.status() == WL_CONNECTED) return;
-  if (millis() - lastReconnectAttempt_ < 10000) return; // avoid hammering the radio while the router is down
-  lastReconnectAttempt_ = millis();
-  Serial.println("[RedButton] WiFi disconnected, reconnecting...");
-  WiFi.reconnect();
+  const bool connected = WiFi.status() == WL_CONNECTED;
+  if (connected != wasConnected_) { Serial.printf("[RedButton] WiFi %s\n", connected ? "reconnected" : "disconnected, auto-reconnecting..."); wasConnected_ = connected; }
 }
 String WiFiManager::ip() const { return (apMode_ ? WiFi.softAPIP() : WiFi.localIP()).toString(); }
