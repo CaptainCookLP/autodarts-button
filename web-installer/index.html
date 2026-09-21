@@ -24,12 +24,25 @@
 <script>
   let logsPort, logsReader, logsKeepReading = false;
   const logsBtn = document.getElementById('logsBtn'), logsStop = document.getElementById('logsStop'), logsOut = document.getElementById('logsOutput');
+  async function stopLogs() {
+    logsKeepReading = false;
+    try { await logsReader?.cancel(); } catch {}
+    try { await logsPort?.close(); } catch {}
+    logsPort = null; logsReader = null;
+    logsBtn.hidden = false; logsStop.hidden = true;
+  }
   logsBtn.addEventListener('click', async () => {
     if (!('serial' in navigator)) { alert('Web Serial wird von diesem Browser nicht unterstützt. Bitte Chrome oder Edge verwenden.'); return; }
     try {
       logsPort = await navigator.serial.requestPort();
       await logsPort.open({ baudRate: 115200 });
-    } catch (e) { alert('Verbindung fehlgeschlagen: ' + e.message); return; }
+    } catch (e) {
+      const hint = e.name === 'InvalidStateError' || e.name === 'NetworkError'
+        ? ' Port ist vermutlich bereits geöffnet (anderer Tab, Arduino IDE Serial Monitor o.ä.) - dort schließen und erneut versuchen.'
+        : '';
+      alert('Verbindung fehlgeschlagen: ' + e.message + hint);
+      return;
+    }
     logsOut.hidden = false; logsOut.textContent = ''; logsBtn.hidden = true; logsStop.hidden = false; logsKeepReading = true;
     const decoder = new TextDecoderStream();
     logsPort.readable.pipeTo(decoder.writable).catch(() => {});
@@ -41,12 +54,12 @@
       if (chunk.value) { logsOut.textContent += chunk.value; logsOut.scrollTop = logsOut.scrollHeight; }
     }
   });
-  logsStop.addEventListener('click', async () => {
-    logsKeepReading = false;
-    try { await logsReader?.cancel(); } catch {}
-    try { await logsPort?.close(); } catch {}
-    logsBtn.hidden = false; logsStop.hidden = true;
-  });
+  logsStop.addEventListener('click', stopLogs);
+  // Release the port before a flash attempt and on navigation, otherwise the installer
+  // fails with "Failed to open serial port" because our own logs session still holds it.
+  document.querySelector('esp-web-install-button')?.addEventListener('click', stopLogs, true);
+  window.addEventListener('beforeunload', stopLogs);
+  window.addEventListener('pagehide', stopLogs);
 </script>
 </body></html>
 
